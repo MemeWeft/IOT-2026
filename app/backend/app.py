@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Flask
 
 from .database import init_app as init_db_app
-from .route import main_bp
+from .routes import main_bp
 
 
 def create_app() -> Flask:
