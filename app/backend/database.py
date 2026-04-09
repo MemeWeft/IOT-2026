@@ -1,34 +1,30 @@
-from __future__ import annotations
-
 import sqlite3
-from flask import current_app, g
-
-# from .model import ScoreRepository
+from flask import g, current_app
 
 
 def get_db() -> sqlite3.Connection:
     if "db" not in g:
-        path = current_app.config["DATABASE_PATH"]
-        conn = sqlite3.connect(path)
+        conn = sqlite3.connect(current_app.config["DATABASE_PATH"])
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON;")
         g.db = conn
     return g.db
 
 
-def close_db(_exc: Exception | None = None) -> None:
+def close_db(_=None):
     conn = g.pop("db", None)
-    if conn is not None:
+    if conn:
         conn.close()
 
 
-def init_db() -> None:
-    conn = get_db()
-    # ScoreRepository.create_table(conn)
-    conn.commit()
-
-
-def init_app(app) -> None:
+def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
-        init_db()
+        get_db().executescript("""
+            CREATE TABLE IF NOT EXISTS measurements (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                height_mm   REAL    NOT NULL,
+                location    TEXT    DEFAULT 'Onbekend',
+                measured_at TEXT    DEFAULT (datetime('now','localtime'))
+            );
+        """)
+        get_db().commit()
