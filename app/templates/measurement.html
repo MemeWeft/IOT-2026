@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Live Metingen — Groen Beheer{% endblock %}
+{% block eyebrow %}Pico Sensor{% endblock %}
+{% block page_title %}Live Metingen{% endblock %}
+
+{% block header_right %}
+  <div style="display:flex;align-items:center;gap:7px;background:var(--green-soft);border-radius:100px;padding:7px 14px;font-size:13px;color:var(--green-dark);font-weight:500;margin-top:8px">
+    <span style="width:8px;height:8px;background:var(--green-mid);border-radius:50%;animation:pulse 1.8s infinite;display:inline-block"></span>
+    Ververst elke 5s
+  </div>
+{% endblock %}
+
+{% block extra_style %}
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .kpi-value { font-family: var(--font-head); font-size: 34px; font-weight: 700; line-height: 1; }
+  .kpi-value small { font-size: 15px; font-weight: 500; margin-left: 2px; }
+  .kpi-value.green { color: var(--green-dark); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.red   { color: var(--red); }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .height-cell { display: flex; align-items: center; gap: 12px; }
+  .height-num { font-weight: 600; min-width: 64px; }
+  .bar-wrap { background: var(--bg); border-radius: 100px; height: 6px; width: 120px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 100px; }
+  .q-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-weight: 700; font-size: 12px; }
+  .qA { background: #D4EDDA; color: var(--green-dark); }
+  .qB { background: #FEF3CC; color: #92620A; }
+  .qC { background: #FCE0E0; color: #9B2B2B; }
+  .empty { text-align: center; padding: 60px; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+  .endpoint-note { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .endpoint-note code { background: var(--bg); border-radius: 6px; padding: 2px 8px; font-size: 12.5px; color: var(--green-dark); font-family: monospace; }
+{% endblock %}
+
+{% block content %}
+
+{% set avg = stats.avg_height %}
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-label">Totaal metingen</div>
+    <div class="kpi-value green">{{ stats.total or 0 }}</div>
+    <div class="kpi-sub">Opgeslagen in database</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Gemiddelde hoogte</div>
+    <div class="kpi-value {% if avg and avg > 80 %}red{% elif avg and avg > 50 %}amber{% else %}green{% endif %}">
+      {{ stats.avg_height or '—' }}<small>{% if stats.avg_height %}mm{% endif %}</small>
+    </div>
+    <div class="kpi-sub">Over alle metingen</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Maximum gemeten</div>
+    <div class="kpi-value {% if stats.max_height and stats.max_height > 80 %}red{% else %}amber{% endif %}">
+      {{ stats.max_height or '—' }}<small>{% if stats.max_height %}mm{% endif %}</small>
+    </div>
+    <div class="kpi-sub">Hoogste waarde</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Minimum gemeten</div>
+    <div class="kpi-value green">
+      {{ stats.min_height or '—' }}<small>{% if stats.min_height %}mm{% endif %}</small>
+    </div>
+    <div class="kpi-sub">Laagste waarde</div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="table-card-header">
+    <h2>Metingen</h2>
+    <span>Laatste 50 resultaten</span>
+  </div>
+
+  {% if rows %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Hoogte</th><th>Kwaliteit</th><th>Locatie</th><th>Tijdstip</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      {% set h = r.height_mm %}
+      {% set q = 'A' if h <= 50 else ('B' if h <= 80 else 'C') %}
+      {% set color = '#4CAF82' if h <= 50 else ('#E8A838' if h <= 80 else '#E05A5A') %}
+      <tr>
+        <td class="muted">{{ r.id }}</td>
+        <td>
+          <div class="height-cell">
+            <span class="height-num">{{ h }} mm</span>
+            <div class="bar-wrap">
+              <div class="bar" style="width: {{ [h / 1.2, 100] | min }}%; background: {{ color }}"></div>
+            </div>
+          </div>
+        </td>
+        <td><span class="q-badge q{{ q }}">{{ q }}</span></td>
+        <td class="muted">{{ r.location }}</td>
+        <td class="muted">{{ r.measured_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">📡</div>
+    <p>Nog geen metingen ontvangen.<br>Wacht op de Pico of stuur een test POST.</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="endpoint-note">
+  📌 Pico stuurt naar: <code>POST /api/measurement</code> — body: <code>{"height_mm": 63.4, "location": "Testlocatie"}</code>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  setInterval(() => location.reload(), 5000);
+</script>
+{% endblock %}

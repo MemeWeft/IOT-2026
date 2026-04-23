@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Van der Werf{% endblock %}
+{% block eyebrow %}Overzicht{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_style %}
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .kpi-value { font-family: var(--font-head); font-size: 36px; font-weight: 700; line-height: 1; margin: 4px 0; }
+  .kpi-value small { font-size: 16px; font-weight: 500; margin-left: 2px; }
+  .kpi-value.accent { color: var(--green-dark); }
+  .kpi-sub { font-size: 12.5px; color: var(--muted); }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
+  .chart-card.wide { grid-column: 1 / -1; }
+  .chart-card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+  .chart-card-header h2 { font-family: var(--font-head); font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+  .chart-sub { font-size: 13px; color: var(--muted); }
+  .norm-legend { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+  .chart-wrap { position: relative; height: 260px; }
+  .donut-wrap { height: 190px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .dl-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: #4CAF82; } .dot.amber { background: #E8A838; } .dot.red { background: #E05A5A; }
+  .empty-chart { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-size: 14px; }
+  .height-cell { display: flex; flex-direction: column; gap: 5px; }
+  .height-val { font-weight: 500; }
+  .height-bar-wrap { background: var(--bg); border-radius: 100px; height: 5px; width: 100px; overflow: hidden; }
+  .height-bar { height: 100%; border-radius: 100px; }
+  .quality-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 700; font-size: 13px; }
+  .qA { background: #D4EDDA; color: var(--green-dark); }
+  .qB { background: #FEF3CC; color: #92620A; }
+  .qC { background: #FCE0E0; color: #9B2B2B; }
+{% endblock %}
+
+{% block content %}
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <span class="kpi-label">Nalevingspercentage</span>
+    <span class="kpi-value accent">{{ compliance_pct }}<small>%</small></span>
+    <span class="kpi-sub">Niveau A + B metingen</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Totaal metingen</span>
+    <span class="kpi-value">{{ stats.total or 0 }}</span>
+    <span class="kpi-sub">Opgeslagen in database</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Locaties gemonitord</span>
+    <span class="kpi-value">{{ loc_count }}</span>
+    <span class="kpi-sub">Unieke locaties</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Max. grashoogte norm</span>
+    <span class="kpi-value">80<small>mm</small></span>
+    <span class="kpi-sub">KOR beeldkwaliteit B</span>
+  </div>
+</div>
+
+<div class="chart-grid">
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div><h2>Kwaliteitsverdeling</h2><p class="chart-sub">KOR beeldkwaliteit A / B / C</p></div>
+    </div>
+    <div class="chart-wrap donut-wrap"><canvas id="donutChart"></canvas></div>
+    <div class="donut-legend">
+      <div class="dl-item"><span class="dot green"></span> Niveau A — uitstekend (≤50mm)</div>
+      <div class="dl-item"><span class="dot amber"></span> Niveau B — voldoende (≤80mm)</div>
+      <div class="dl-item"><span class="dot red"></span> Niveau C — onvoldoende (&gt;80mm)</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div><h2>Gemiddelde per locatie</h2><p class="chart-sub">Huidige gemiddelde hoogte (mm)</p></div>
+    </div>
+    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+  </div>
+
+</div>
+
+<div class="chart-grid">
+
+  <div class="chart-card wide">
+    <div class="chart-card-header">
+      <div><h2>Grashoogte over tijd</h2><p class="chart-sub">Gemiddelde hoogte per locatie (mm) — afgelopen 28 dagen</p></div>
+      <div class="norm-legend"><span class="dot red"></span> Norm 80 mm</div>
+    </div>
+    <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+  </div>
+
+</div>
+
+<div class="section-title">Locatiestatus</div>
+{% if summary %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Locatie</th><th>Gem. hoogte</th><th>Max. hoogte</th><th>Kwaliteit</th><th>Metingen</th><th>Laatste meting</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in summary %}
+      {% set color = '#4CAF82' if row.avg_height <= 50 else ('#E8A838' if row.avg_height <= 80 else '#E05A5A') %}
+      <tr>
+        <td><strong>{{ row.location }}</strong></td>
+        <td>
+          <div class="height-cell">
+            <span class="height-val">{{ row.avg_height }} mm</span>
+            <div class="height-bar-wrap"><div class="height-bar" style="width: {{ [row.avg_height / 1.2, 100] | min }}%; background: {{ color }}"></div></div>
+          </div>
+        </td>
+        <td class="muted">{{ row.max_height }} mm</td>
+        <td><span class="quality-badge q{{ row.quality }}">{{ row.quality }}</span></td>
+        <td class="muted">{{ row.total }}</td>
+        <td class="muted">{{ row.last_measured[:10] if row.last_measured else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-card" style="padding:40px;text-align:center;color:var(--muted);font-size:14px">
+  Nog geen locatiedata. Verbind de Pico sensor om metingen te ontvangen.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color = "#7A8A7A";
+const COLORS = ["#4CAF82","#5B8DEF","#E8A838","#9B6EE8","#3DBFBF","#E05A5A"];
+
+async function loadCharts() {
+  const [chartRaw, qualRaw, locRaw] = await Promise.all([
+    fetch("/api/chart-data").then(r => r.json()),
+    fetch("/api/quality-summary").then(r => r.json()),
+    fetch("/api/location-summary").then(r => r.json()),
+  ]);
+
+  const days = [...new Set(chartRaw.map(r => r.day))].sort();
+  const locs = [...new Set(chartRaw.map(r => r.location))];
+  const lineDatasets = locs.map((loc, i) => ({
+    label: loc,
+    data: days.map(d => { const f = chartRaw.find(r => r.day === d && r.location === loc); return f ? f.avg_height : null; }),
+    borderColor: COLORS[i % COLORS.length], backgroundColor: COLORS[i % COLORS.length] + "22",
+    borderWidth: 2, pointRadius: 3, tension: 0.4, fill: false, spanGaps: true,
+  }));
+  lineDatasets.push({ label: "Norm (80 mm)", data: days.map(() => 80), borderColor: "#E05A5A", borderWidth: 1.5, borderDash: [6,4], pointRadius: 0, fill: false });
+
+  if (days.length > 0) {
+    new Chart(document.getElementById("lineChart"), {
+      type: "line", data: { labels: days.map(d => d.slice(5)), datasets: lineDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 16 } } },
+        scales: { x: { grid: { color: "#E8EEE8" }, ticks: { maxTicksLimit: 10 } }, y: { grid: { color: "#E8EEE8" }, min: 0, max: 120, title: { display: true, text: "Hoogte (mm)" } } },
+      },
+    });
+  } else {
+    document.getElementById("lineChart").parentElement.innerHTML = '<div class="empty-chart">Nog geen tijdreeksdata.</div>';
+  }
+
+  if (qualRaw.length > 0) {
+    new Chart(document.getElementById("donutChart"), {
+      type: "doughnut",
+      data: { labels: qualRaw.map(r => `Niveau ${r.quality}`), datasets: [{ data: qualRaw.map(r => r.count), backgroundColor: qualRaw.map(r => r.quality === "A" ? "#4CAF82" : r.quality === "B" ? "#E8A838" : "#E05A5A"), borderWidth: 0, hoverOffset: 8 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { display: false } } },
+    });
+  } else {
+    document.getElementById("donutChart").parentElement.innerHTML = '<div class="empty-chart">Nog geen kwaliteitsdata.</div>';
+  }
+
+  if (locRaw.length > 0) {
+    new Chart(document.getElementById("barChart"), {
+      type: "bar",
+      data: { labels: locRaw.map(r => r.location.split(" ")[0]), datasets: [{ label: "Gem. hoogte (mm)", data: locRaw.map(r => r.avg_height), backgroundColor: locRaw.map(r => r.avg_height <= 50 ? "#4CAF82" : r.avg_height <= 80 ? "#E8A838" : "#E05A5A"), borderRadius: 8, borderSkipped: false }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: "#E8EEE8" }, min: 0, max: 120, title: { display: true, text: "Hoogte (mm)" } } } },
+    });
+  } else {
+    document.getElementById("barChart").parentElement.innerHTML = '<div class="empty-chart">Nog geen locatiedata.</div>';
+  }
+}
+
+loadCharts();
+</script>
+{% endblock %}

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Gebruikers — Van der Werf{% endblock %}
+{% block eyebrow %}Beheer{% endblock %}
+{% block page_title %}Gebruikers{% endblock %}
+
+{% block extra_style %}
+  .users-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .table-card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
+  .table-card-header h2 { font-family: var(--font-head); font-size: 17px; font-weight: 600; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .data-table thead tr { background: var(--bg); border-bottom: 1px solid var(--border); }
+  .data-table th { padding: 11px 18px; text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+  .data-table td { padding: 13px 18px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg); }
+
+  .role-badge { display: inline-block; border-radius: 100px; padding: 3px 10px; font-size: 12px; font-weight: 500; }
+  .role-admin { background: var(--green-soft); color: var(--green-dark); }
+  .role-user  { background: var(--bg); border: 1px solid var(--border); color: var(--muted); }
+
+  .action-btns { display: flex; gap: 8px; }
+  .btn-pw { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 12px; font-family: var(--font-body); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .btn-pw:hover { background: var(--green-soft); border-color: #B6DCCA; color: var(--green-dark); }
+  .btn-del { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 12px; font-family: var(--font-body); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .btn-del:hover { background: #FCE0E0; border-color: #F0BBBB; color: var(--red); }
+  .btn-del:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Form card */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .form-card h2 { font-family: var(--font-head); font-size: 17px; font-weight: 600; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .field input[type="text"], .field input[type="password"] { padding: 10px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.15s; }
+  .field input:focus { border-color: var(--green-mid); background: #fff; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer; }
+  .checkbox-row input { width: 16px; height: 16px; accent-color: var(--green-dark); cursor: pointer; }
+  .submit-btn { background: var(--green-dark); color: #fff; border: none; border-radius: var(--radius-sm); padding: 11px 16px; font-size: 14px; font-family: var(--font-head); font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .submit-btn:hover { background: #235840; }
+  .form-error { background: #FCE0E0; border: 1px solid #F0BBBB; border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; color: var(--red); display: none; }
+  .form-success { background: var(--green-soft); border: 1px solid #B6DCCA; border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; color: var(--green-dark); display: none; }
+
+  /* Password modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); padding: 28px; width: 360px; box-shadow: 0 16px 48px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 16px; }
+  .modal h3 { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-cancel { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 16px; font-size: 13px; font-family: var(--font-body); color: var(--muted); cursor: pointer; }
+  .modal-save { background: var(--green-dark); color: #fff; border: none; border-radius: var(--radius-sm); padding: 9px 16px; font-size: 13px; font-family: var(--font-head); font-weight: 600; cursor: pointer; }
+{% endblock %}
+
+{% block content %}
+<div class="users-layout">
+
+  <!-- Users table -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <h2>Alle gebruikers</h2>
+      <span style="font-size:12px;color:var(--muted)">{{ users | length }} account(s)</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Gebruikersnaam</th><th>Rol</th><th>Aangemaakt</th><th>Acties</th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        {% for u in users %}
+        <tr id="user-row-{{ u.id }}">
+          <td class="muted">{{ u.id }}</td>
+          <td><strong>{{ u.username }}</strong></td>
+          <td>
+            <span class="role-badge {% if u.is_admin %}role-admin{% else %}role-user{% endif %}">
+              {% if u.is_admin %}Admin{% else %}Gebruiker{% endif %}
+            </span>
+          </td>
+          <td class="muted">{{ u.created_at[:10] }}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn-pw" onclick="openPwModal({{ u.id }}, '{{ u.username }}')">
+                Wachtwoord
+              </button>
+              <button class="btn-del"
+                onclick="deleteUser({{ u.id }}, '{{ u.username }}')"
+                {% if u.username == 'admin' %}disabled title="Admin kan niet verwijderd worden"{% endif %}>
+                Verwijder
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Create user form -->
+  <div class="form-card">
+    <h2>Nieuwe gebruiker</h2>
+    <div class="form-error" id="form-error"></div>
+    <div class="form-success" id="form-success"></div>
+    <div class="field">
+      <label>Gebruikersnaam</label>
+      <input type="text" id="new-username" placeholder="bijv. jan" />
+    </div>
+    <div class="field">
+      <label>Wachtwoord</label>
+      <input type="password" id="new-password" placeholder="••••••••" />
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" id="new-is-admin" />
+      Beheerdersaccount
+    </label>
+    <button class="submit-btn" onclick="createUser()">Aanmaken →</button>
+  </div>
+
+</div>
+
+<!-- Password modal -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal">
+    <h3>Wachtwoord wijzigen</h3>
+    <p style="font-size:13px;color:var(--muted)">Nieuw wachtwoord instellen voor <strong id="pw-modal-name"></strong>.</p>
+    <div class="field">
+      <label>Nieuw wachtwoord</label>
+      <input type="password" id="pw-modal-input" placeholder="••••••••" />
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closePwModal()">Annuleren</button>
+      <button class="modal-save" onclick="savePassword()">Opslaan</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let pwTargetId = null;
+
+function openPwModal(id, username) {
+  pwTargetId = id;
+  document.getElementById("pw-modal-name").textContent = username;
+  document.getElementById("pw-modal-input").value = "";
+  document.getElementById("pw-modal").classList.add("open");
+  setTimeout(() => document.getElementById("pw-modal-input").focus(), 50);
+}
+
+function closePwModal() {
+  document.getElementById("pw-modal").classList.remove("open");
+  pwTargetId = null;
+}
+
+async function savePassword() {
+  const pw = document.getElementById("pw-modal-input").value.trim();
+  if (!pw) return;
+  const res = await fetch(`/api/users/${pwTargetId}/password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pw })
+  });
+  if (res.ok) {
+    closePwModal();
+    showSuccess("Wachtwoord succesvol gewijzigd.");
+  }
+}
+
+async function deleteUser(id, username) {
+  if (!confirm(`Gebruiker "${username}" verwijderen?`)) return;
+  const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+  if (res.ok) {
+    const row = document.getElementById(`user-row-${id}`);
+    row.style.opacity = "0";
+    row.style.transition = "opacity 0.3s";
+    setTimeout(() => row.remove(), 300);
+  }
+}
+
+async function createUser() {
+  const username = document.getElementById("new-username").value.trim();
+  const password = document.getElementById("new-password").value;
+  const is_admin = document.getElementById("new-is-admin").checked;
+
+  hideMessages();
+  if (!username || !password) {
+    showError("Vul alle velden in.");
+    return;
+  }
+
+  const res = await fetch("/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, is_admin })
+  });
+
+  if (res.status === 409) { showError("Gebruikersnaam bestaat al."); return; }
+  if (!res.ok) { showError("Er ging iets mis."); return; }
+
+  const user = await res.json();
+  document.getElementById("new-username").value = "";
+  document.getElementById("new-password").value = "";
+  document.getElementById("new-is-admin").checked = false;
+  showSuccess(`Gebruiker "${username}" aangemaakt.`);
+
+  // Add row to table
+  const tbody = document.getElementById("users-tbody");
+  const tr = document.createElement("tr");
+  tr.id = `user-row-${user.id}`;
+  tr.innerHTML = `
+    <td class="muted">${user.id}</td>
+    <td><strong>${username}</strong></td>
+    <td><span class="role-badge ${is_admin ? 'role-admin' : 'role-user'}">${is_admin ? 'Admin' : 'Gebruiker'}</span></td>
+    <td class="muted">Vandaag</td>
+    <td>
+      <div class="action-btns">
+        <button class="btn-pw" onclick="openPwModal(${user.id}, '${username}')">Wachtwoord</button>
+        <button class="btn-del" onclick="deleteUser(${user.id}, '${username}')">Verwijder</button>
+      </div>
+    </td>`;
+  tbody.appendChild(tr);
+}
+
+function showError(msg) {
+  const el = document.getElementById("form-error");
+  el.textContent = msg; el.style.display = "block";
+}
+function showSuccess(msg) {
+  const el = document.getElementById("form-success");
+  el.textContent = msg; el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 3000);
+}
+function hideMessages() {
+  document.getElementById("form-error").style.display = "none";
+  document.getElementById("form-success").style.display = "none";
+}
+
+// Close modal on overlay click
+document.getElementById("pw-modal").addEventListener("click", function(e) {
+  if (e.target === this) closePwModal();
+});
+</script>
+{% endblock %}

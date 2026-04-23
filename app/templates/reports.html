@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Rapporten — Groen Beheer{% endblock %}
+{% block eyebrow %}Weekrapportages{% endblock %}
+{% block page_title %}Rapporten{% endblock %}
+
+{% block header_right %}
+  <div style="display:flex;align-items:center;gap:12px;padding-top:8px">
+    <span style="background:var(--sand);border-radius:100px;padding:6px 14px;font-size:13px;color:var(--amber);font-weight:500">
+      Automatisch verwijderd na 30 dagen
+    </span>
+    <button onclick="generateReport()" style="background:var(--green-dark);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-size:13px;font-family:var(--font-body);font-weight:500;cursor:pointer">
+      + Genereer rapport
+    </button>
+  </div>
+{% endblock %}
+
+{% block extra_style %}
+  .reports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .report-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); transition: transform 0.18s, box-shadow 0.18s, opacity 0.3s; }
+  .report-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .report-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .report-week { font-family: var(--font-head); font-size: 24px; font-weight: 800; color: var(--green-dark); }
+  .report-week span { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .ttl-pill { background: var(--green-soft); color: var(--green-dark); border-radius: 100px; padding: 4px 11px; font-size: 12px; font-weight: 500; }
+  .ttl-pill.urgent { background: #FCE0E0; color: var(--red); }
+  .report-title { font-family: var(--font-head); font-size: 16px; font-weight: 600; }
+  .report-notes { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .report-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .rs { display: flex; flex-direction: column; gap: 2px; }
+  .rs-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .rs-val { font-weight: 600; font-size: 15px; }
+  .rs-val.green { color: var(--green-dark); } .rs-val.amber { color: var(--amber); } .rs-val.red { color: var(--red); }
+  .delete-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 16px; font-size: 13px; font-family: var(--font-body); color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; width: 100%; margin-top: 4px; }
+  .delete-btn:hover { background: #FCE0E0; border-color: #F0BBBB; color: var(--red); }
+  .empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: var(--font-head); font-size: 20px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 14px; }
+{% endblock %}
+
+{% block content %}
+{% if reports %}
+<div class="reports-grid" id="reports-grid">
+  {% for r in reports %}
+  <div class="report-card" id="report-{{ r.id }}">
+    <div class="report-card-top">
+      <div class="report-week">W{{ r.week_nr }}<span>/{{ r.year }}</span></div>
+      <div class="ttl-pill {% if r.days_left <= 7 %}urgent{% endif %}">
+        {% if r.days_left <= 0 %}Verlopen{% else %}{{ r.days_left }} dagen resterend{% endif %}
+      </div>
+    </div>
+    <h3 class="report-title">{{ r.title }}</h3>
+    <p class="report-notes">{{ r.notes }}</p>
+    <div class="report-stats">
+      <div class="rs">
+        <span class="rs-label">Gem. hoogte</span>
+        <span class="rs-val">{{ r.avg_height or '—' }}{% if r.avg_height %} mm{% endif %}</span>
+      </div>
+      <div class="rs">
+        <span class="rs-label">Naleving</span>
+        <span class="rs-val {% if r.compliance >= 90 %}green{% elif r.compliance >= 75 %}amber{% else %}red{% endif %}">
+          {{ r.compliance or '—' }}{% if r.compliance %}%{% endif %}
+        </span>
+      </div>
+      <div class="rs">
+        <span class="rs-label">Aangemaakt</span>
+        <span class="rs-val">{{ r.created_at[:10] }}</span>
+      </div>
+    </div>
+    <button class="delete-btn" onclick="deleteReport({{ r.id }})">Verwijder rapport</button>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h3>Geen rapporten beschikbaar</h3>
+  <p>Klik op "+ Genereer rapport" om een weekrapportage aan te maken op basis van de huidige metingen.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function deleteReport(id) {
+  if (!confirm("Rapport verwijderen?")) return;
+  const res = await fetch(`/api/reports/${id}`, { method: "DELETE" });
+  if (res.ok) {
+    const card = document.getElementById(`report-${id}`);
+    card.style.opacity = "0";
+    card.style.transform = "scale(0.95)";
+    setTimeout(() => { card.remove(); }, 300);
+  }
+}
+
+async function generateReport() {
+  const res = await fetch("/api/reports/generate", { method: "POST" });
+  if (res.ok) {
+    location.reload();
+  } else {
+    alert("Er ging iets mis bij het genereren.");
+  }
+}
+</script>
+{% endblock %}

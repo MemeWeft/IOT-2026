@@ -26,5 +26,17 @@ def init_app(app):
                 location    TEXT    DEFAULT 'Onbekend',
                 measured_at TEXT    DEFAULT (datetime('now','localtime'))
             );
+
+            CREATE TABLE IF NOT EXISTS reports (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                title       TEXT    NOT NULL,
+                week_nr     INTEGER NOT NULL,
+                year        INTEGER NOT NULL,
+                avg_height  REAL,
+                compliance  REAL,
+                notes       TEXT,
+                created_at  TEXT    DEFAULT (datetime('now','localtime')),
+                expires_at  TEXT    NOT NULL
+            );
         """)
         get_db().commit()
