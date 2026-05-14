@@ -24,7 +24,9 @@ def init_app(app):
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 height_mm   REAL    NOT NULL,
                 location    TEXT    DEFAULT 'Onbekend',
-                measured_at TEXT    DEFAULT (datetime('now','localtime'))
+                measured_at TEXT    DEFAULT (datetime('now','localtime')),
+                latitude    REAL    NULL,   -- horizontale meting met decimaal getal (want komma's), en NULL ('geen waarde') toegestaan
+                longitude   REAL    NULL    -- verticale meting met decimaal getal (want komma's), en NULL ('geen waarde') toegestaan
             );
 
             CREATE TABLE IF NOT EXISTS reports (

@@ -77,15 +77,21 @@ def api_delete_user(user_id):
         abort(400, "Cannot delete admin account")
     return jsonify({"deleted": user_id})
 
-# Measurement API (open for Pico)
+# Measurement API (open for Pico):
+
+# Deze functie haalt JSON data op die de Pico instuurt en haalt daar hoogte, latitude en longitude uit.
+# Als er geen hoogte is, geeft hij foutmelding terug.
+# Hij slaat de meting op in de database via model.py en stuurt dan bevestiging naar Pico.
 @main_bp.post("/api/measurement")
 def add_measurement():
     body = request.get_json(force=True, silent=True) or {}
     height = body.get("height_mm")
+    lat = body.get("latitude")
+    long = body.get("longitude")
     if height is None:
         abort(400, "height_mm required")
-    row_id = MeasurementRepository.insert(float(height), body.get("location", "Onbekend"))
-    return jsonify({"id": row_id, "height_mm": height}), 201
+    row_id = MeasurementRepository.insert(float(height), body.get("location", "Onbekend"), lat, long)
+    return jsonify({"id": row_id, "height_mm": height, "latitude": lat, "longitude": long}), 201
 
 @main_bp.get("/api/measurements")
 @login_required

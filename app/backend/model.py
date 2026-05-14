@@ -4,6 +4,18 @@ from .database import get_db
 
 class MeasurementRepository:
 
+    # Nieuwe functie die uit de db voor elke locatie de recente meting geeft mits er coordinaten zijn, waarna hiij lijst teruggeeft (voor de kaartpagina):
+    @staticmethod
+    def get_map_data() -> list[dict]:
+        rows = get_db().execute(
+            "SELECT location, latitude, longitude, height_mm "
+            "FROM measurements "
+            "WHERE latitude IS NOT NULL "
+            "GROUP BY location "
+            "ORDER BY measured_at DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
     @staticmethod
     def get_all(limit: int = 50) -> list[dict]:
         rows = get_db().execute(
@@ -11,15 +23,16 @@ class MeasurementRepository:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    # coordinaten toegevoegd:
     @staticmethod
-    def insert(height_mm: float, location: str = "Onbekend") -> int:
+    def insert(height_mm: float, location: str = "Onbekend", latitude: float = None, longitude: float = None) -> int:   # latitude en longitude toegevoegd als meegegeven waarden, standaard 'geen waarde beschikbaar' (Null)
         db = get_db()
         cur = db.execute(
-            "INSERT INTO measurements (height_mm, location) VALUES (?, ?)",
-            (height_mm, location)
+            "INSERT INTO measurements (height_mm, location, latitude, longitude) VALUES (?, ?, ?, ?)",  # toegevoegde latitude en longitude worden meeverwerkt in de SQL-Query
+            (height_mm, location, latitude, longitude)
         )
         db.commit()
-        return cur.lastrowid
+        return cur.lastrowid    # dit geeft ID terug van de rij die net is toegevoegd
 
     @staticmethod
     def get_stats() -> dict:
