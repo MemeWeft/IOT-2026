@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Kaart — Van der Werf{% endblock %}
+{% block eyebrow %}Overzicht{% endblock %}
+{% block page_title %}Kaart{% endblock %}
+
+<!-- Nieuwe html voor de kaartweergave -->
+
+{% block content %}
+    <!-- Dit laadt Leaflet in en maakt een lege div aan waar de kaart in komt -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <div id="kaart" style="height: calc(100vh - 200px);"></div>
+        <script>
+            var map = L.map("kaart").setView([53, 6.5], 10);   // maak een kaart aan in de div met id "kaart"
+                                                                // en stel het beginpunt in op Noord-Nederland
+                                                                // en zoom level 10 (zoomed uit genoeg om Noordelijke regio te zien)
+
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { // een kaart bestaat uit kleine tegeltjes (tiles), dit laadt die tegeltjes in van OpenStreetMap (de gratis kaart die iedereen kent)
+                attribution: "© OpenStreetMap"  // verplict tekstje voor credits
+                }).addTo(map);  // voeg die tegeltjes toe aan de kaart
+            
+            // onderste brengt meetdata van Python naar JavaScript zodat er punten van kunnen maken op de kaart.
+            var metingen = {{ kaart | tojson }};    // {{ kaart }} komt uit kaart_weergave in routes.py en dit zet die python data in html via Jinja2; tojson zet python lijst van dictionaries om naar JSON, zodata Javascript ermee kan werken
+            
+            // loopt door alle metingen heen:
+            metingen.forEach(function(meting) {
+                // plaatst marker op de kaart op de GPS-coördinaten van de meting:
+                L.marker([meting.latitude, meting.longitude])
+                    .addTo(map) // voegtr de marker toe aan de kaart
+                    .bindPopup(meting.location + "<br>Hoogte: " + meting.height_mm + " mm"); // toon locatienaam en grashoogte in een popup
+            });
+        </script>
+{% endblock %}

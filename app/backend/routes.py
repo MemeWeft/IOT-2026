@@ -7,6 +7,13 @@ main_bp = Blueprint("main", __name__)
 
 # ── Pages ──────────────────────────────────────────────────────────────────
 
+# Nieuwe route voor de pagina van de kaart:
+@main_bp.get("/kaart")
+@login_required
+def kaart_weergave():
+    kaart      = MeasurementRepository.get_map_data()
+    return render_template("kaart.html", kaart=kaart)
+
 @main_bp.get("/")
 @login_required
 def index():

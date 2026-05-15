@@ -98,13 +98,22 @@
         <span class="nav-icon">📡</span><span>Live Metingen</span>
       </a>
     </li>
+
+  <!--Kaartweergave-->
+      <li>
+      <a href="{{ url_for('main.kaart_weergave') }}" class="nav-link {% if request.endpoint == 'main.kaart_weergave' %}active{% endif %}">  <!-- Main is gewoon de blueprint -->
+        <span class="nav-icon">🗺️</span><span>Kaart</span>
+      </a>
+    </li>
+
     {% if session.get('is_admin') %}
     <li>
       <a href="{{ url_for('main.users_page') }}" class="nav-link {% if request.endpoint == 'main.users_page' %}active{% endif %}">
         <span class="nav-icon">👥</span><span>Gebruikers</span>
-      </a>
+      </a> 
     </li>
     {% endif %}
+
   </ul>
   <div class="sidebar-footer">
     <span class="user-info">Ingelogd als {{ session.get('username', '') }}</span>
