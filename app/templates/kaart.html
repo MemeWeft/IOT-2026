@@ -23,12 +23,29 @@
             // onderste brengt meetdata van Python naar JavaScript zodat er punten van kunnen maken op de kaart.
             var metingen = {{ kaart | tojson }};    // {{ kaart }} komt uit kaart_weergave in routes.py en dit zet die python data in html via Jinja2; tojson zet python lijst van dictionaries om naar JSON, zodata Javascript ermee kan werken
             
-            // loopt door alle metingen heen:
+            // Loop door alle metingen heen
             metingen.forEach(function(meting) {
-                // plaatst marker op de kaart op de GPS-coördinaten van de meting:
-                L.marker([meting.latitude, meting.longitude])
-                    .addTo(map) // voegtr de marker toe aan de kaart
-                    .bindPopup(meting.location + "<br>Hoogte: " + meting.height_mm + " mm"); // toon locatienaam en grashoogte in een popup
+
+                // Bepaal de kleur op basis van grashoogte (zelfde niveaus als dashboard)
+                var kleur;
+                if (meting.height_mm <= 50) {
+                    kleur = "#3DBE3D";      // groen — niveau A (uitstekend)
+                } else if (meting.height_mm <= 80) {
+                    kleur = "#E8A838";      // oranje — niveau B (voldoende)
+                } else {
+                    kleur = "#E81010";      // rood — niveau C (onvoldoende)
+                }
+
+                // Plaats een gekleurde cirkel op de kaart in plaats van een standaard marker
+                L.circleMarker([meting.latitude, meting.longitude], {
+                    radius: 10,             // grootte van de cirkel
+                    fillColor: kleur,       // vulkleur op basis van kwaliteitsniveau
+                    color: "#fff",          // witte rand om de cirkel
+                    weight: 2,              // dikte van de rand
+                    fillOpacity: 0.9        // bijna volledig dekkend
+                })
+                .addTo(map)
+                .bindPopup(meting.location + "<br>Hoogte: " + meting.height_mm + " mm"); // popup met locatie en hoogte
             });
         </script>
 {% endblock %}
