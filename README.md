@@ -6,7 +6,7 @@ Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een same
 
 | Branch | Beschrijving |
 |--------|-------------|
-| `main` | Overige (belangrijke) bestanden voor documentatie, code zelf is voornamelijk gewerkt in branches. Misschien niet het meest logisch, maar dit werkte voor ons prima en we vonden het niet nodig dit te veranderen. |
+| `main` | Overige (belangrijke) bestanden voor documentatie, code zelf is voornamelijk gewerkt in branches. |
 | `gps-feature` | Meest recente versie (branch) met GPS-functionaliteit |
 
 ## Uitgebreide documentatie (gelinkt aan Confluence)
