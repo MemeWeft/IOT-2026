@@ -27,6 +27,7 @@ def init_users_app(app):
                 username      TEXT    NOT NULL UNIQUE,
                 password_hash TEXT    NOT NULL,
                 is_admin      INTEGER NOT NULL DEFAULT 0,
+<<<<<<< HEAD
                 client_name   TEXT    NULL,
                 created_at    TEXT    DEFAULT (datetime('now','localtime'))
             );
@@ -36,6 +37,11 @@ def init_users_app(app):
             db.execute("ALTER TABLE users ADD COLUMN client_name TEXT NULL")
         except Exception:
             pass  # kolom bestaat al
+=======
+                created_at    TEXT    DEFAULT (datetime('now','localtime'))
+            );
+        """)
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
         db.commit()
 
         # Seed hardcoded admin if not exists
@@ -47,6 +53,7 @@ def init_users_app(app):
                 "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 1)",
                 ("admin", generate_password_hash("69420"))
             )
+<<<<<<< HEAD
             db.commit()
 
         # Seed voorbeeld-klant: Gemeente Groningen
@@ -58,4 +65,6 @@ def init_users_app(app):
                 "INSERT INTO users (username, password_hash, is_admin, client_name) VALUES (?, ?, 0, ?)",
                 ("gemeente_groningen", generate_password_hash("groningen2026"), "Gemeente Groningen")
             )
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
             db.commit()

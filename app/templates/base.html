@@ -116,11 +116,14 @@
 
   </ul>
   <div class="sidebar-footer">
+<<<<<<< HEAD
     {% if session.get('client_name') %}
     <span style="font-size:11px;color:rgba(255,255,255,0.55);padding:0 4px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;">
       {{ session.get('client_name') }}
     </span>
     {% endif %}
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
     <span class="user-info">Ingelogd als {{ session.get('username', '') }}</span>
     <a href="{{ url_for('auth.logout') }}" class="logout-btn">
       <span style="font-size:16px">⎋</span><span>Uitloggen</span>

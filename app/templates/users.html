@@ -62,7 +62,11 @@
     <table class="data-table">
       <thead>
         <tr>
+<<<<<<< HEAD
           <th>#</th><th>Gebruikersnaam</th><th>Rol</th><th>Klant</th><th>Aangemaakt</th><th>Acties</th>
+=======
+          <th>#</th><th>Gebruikersnaam</th><th>Rol</th><th>Aangemaakt</th><th>Acties</th>
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
         </tr>
       </thead>
       <tbody id="users-tbody">
@@ -75,7 +79,10 @@
               {% if u.is_admin %}Admin{% else %}Gebruiker{% endif %}
             </span>
           </td>
+<<<<<<< HEAD
           <td class="muted">{{ u.client_name or '—' }}</td>
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
           <td class="muted">{{ u.created_at[:10] }}</td>
           <td>
             <div class="action-btns">
@@ -108,10 +115,13 @@
       <label>Wachtwoord</label>
       <input type="password" id="new-password" placeholder="••••••••" />
     </div>
+<<<<<<< HEAD
     <div class="field">
       <label>Klant (leeg = intern medewerker)</label>
       <input type="text" id="new-client-name" placeholder="bijv. Gemeente Groningen" />
     </div>
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
     <label class="checkbox-row">
       <input type="checkbox" id="new-is-admin" />
       Beheerdersaccount
@@ -181,6 +191,7 @@ async function deleteUser(id, username) {
 }
 
 async function createUser() {
+<<<<<<< HEAD
   const username    = document.getElementById("new-username").value.trim();
   const password    = document.getElementById("new-password").value;
   const is_admin    = document.getElementById("new-is-admin").checked;
@@ -189,13 +200,26 @@ async function createUser() {
   hideMessages();
   if (!username || !password) {
     showError("Vul gebruikersnaam en wachtwoord in.");
+=======
+  const username = document.getElementById("new-username").value.trim();
+  const password = document.getElementById("new-password").value;
+  const is_admin = document.getElementById("new-is-admin").checked;
+
+  hideMessages();
+  if (!username || !password) {
+    showError("Vul alle velden in.");
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
     return;
   }
 
   const res = await fetch("/api/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+<<<<<<< HEAD
     body: JSON.stringify({ username, password, is_admin, client_name })
+=======
+    body: JSON.stringify({ username, password, is_admin })
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
   });
 
   if (res.status === 409) { showError("Gebruikersnaam bestaat al."); return; }
@@ -204,7 +228,10 @@ async function createUser() {
   const user = await res.json();
   document.getElementById("new-username").value = "";
   document.getElementById("new-password").value = "";
+<<<<<<< HEAD
   document.getElementById("new-client-name").value = "";
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
   document.getElementById("new-is-admin").checked = false;
   showSuccess(`Gebruiker "${username}" aangemaakt.`);
 
@@ -216,7 +243,10 @@ async function createUser() {
     <td class="muted">${user.id}</td>
     <td><strong>${username}</strong></td>
     <td><span class="role-badge ${is_admin ? 'role-admin' : 'role-user'}">${is_admin ? 'Admin' : 'Gebruiker'}</span></td>
+<<<<<<< HEAD
     <td class="muted">${client_name || '—'}</td>
+=======
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
     <td class="muted">Vandaag</td>
     <td>
       <div class="action-btns">

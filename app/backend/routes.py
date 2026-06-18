@@ -93,10 +93,6 @@ def api_delete_user(user_id):
     return jsonify({"deleted": user_id})
 
 # Measurement API (open for Pico):
-
-# Deze functie haalt JSON data op die de Pico instuurt en haalt daar hoogte, latitude en longitude uit.
-# Als er geen hoogte is, geeft hij foutmelding terug.
-# Hij slaat de meting op in de database via model.py en stuurt dan bevestiging naar Pico.
 @main_bp.post("/api/measurement")
 def add_measurement():
     body = request.get_json(force=True, silent=True) or {}
