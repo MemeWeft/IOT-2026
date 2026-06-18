@@ -29,3 +29,8 @@ Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een same
 - **Scrumboard** — dit is een belangrijk onderdeel en is voor het beste overzicht te vinden onder *Projects -> Scrumboard*
 - **Requirements** — ook direct in te zien via *Issues*
 - **Insights** — Hier vind je wat statistieken en verdere *Inzichten* in de uitwerking van het project.
+
+
+## Namen
+
+- ""Namen"" — Drie van ons (Mats, Koen & Damian) hebben eigen naam in onze gebruikersnaam zitten, Wouter is de overige dus (MemeWeft).
