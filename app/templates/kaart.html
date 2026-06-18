@@ -32,6 +32,25 @@
     color: #1C2B1C;
     text-shadow: 1px 1px 0 white,-1px -1px 0 white,1px -1px 0 white,-1px 1px 0 white;
 }
+.prioriteit-panel {
+    background: white;
+    border: 1px solid #E2EAE0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 220px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+.prioriteit-panel b { color: var(--green-dark); display:block; margin-bottom:8px; font-size:11px; letter-spacing:0.07em; text-transform:uppercase; }
+.prioriteit-rij { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid #F0F4EF; font-size:12px; }
+.prioriteit-rij:last-child { border-bottom:none; }
+.prio-nr { font-weight:800; color:#7A8A7A; min-width:16px; }
+.prio-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.prio-naam { flex:1; }
+.prio-mm { font-weight:600; color:#7A8A7A; font-size:11px; }
 .legenda-vak {
     display: inline-block;
     width: 14px;
@@ -97,7 +116,7 @@
         }
 
         // Markers bijhouden voor zoom-toggle
-        var zoneMarkers = [], overviewMarkers = [], veldLabels = [];
+        var zoneMarkers = [], overviewMarkers = [], veldLabels = [], veldRoute = [];
         var ZONE_ZOOM = 13;
         map.on('zoomend', function() {
             var ingezoomd = map.getZoom() >= ZONE_ZOOM;
@@ -189,32 +208,120 @@
                 // Zones alleen tonen als er voldoende hoogteverschil is (marge ≥ 15mm)
                 var hoogsteZone = zones[0].gem, laagsteZone = zones[zones.length-1].gem;
                 if (zones.length > 1 && (hoogsteZone - laagsteZone) >= 15) {
-                    var labels = ["BEGIN", "2e zone", "3e zone", "EINDE"];
                     zones.forEach(function(z,i){
                         var baseKlr = kleurVoor(z.gem);
                         var klr = prioriteitKleur(baseKlr, i, zones.length);
-                        var lbl = labels[i] || (i+1)+"e zone";
-                        var isEinde = i === zones.length - 1;
                         var icon = L.divIcon({className:'', iconSize:[52,42], iconAnchor:[26,14],
                             html:"<div style='text-align:center'>" +
                                 "<div style='background:"+klr+";color:#fff;border-radius:50%;width:28px;height:28px;line-height:28px;text-align:center;font-size:14px;font-weight:800;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45);margin:auto'>"+(i+1)+"</div>" +
-                                "<div style='background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 5px;font-size:9px;font-weight:700;color:#1C2B1C;margin-top:2px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.2)'>"+lbl+"</div>" +
+                                "<div style='background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 5px;font-size:9px;font-weight:700;color:#1C2B1C;margin-top:2px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.2)'>"+z.naam+"</div>" +
                             "</div>"
                         });
-                        var popupTekst = "<b style='font-size:13px'>"+(i+1)+". "+z.naam+"</b><br>" +
-                            "<span style='color:#7A8A7A;font-size:12px'>Gem. hoogte: "+z.gem+" mm</span><br><br>" +
-                            (i===0 ? "<span style='color:#2D6A4F;font-weight:600'>▶ Begin hier — hoogste gras</span>" :
-                             isEinde ? "<span style='color:#7A8A7A'>✓ Eindpunt — laagste prioriteit</span>" :
-                             "<span style='color:#7A8A7A'>Maai na zone "+(i)+"</span>");
+                        var popupTekst = "<b style='font-size:13px'>"+z.naam+"</b><br>" +
+                            "<span style='color:#7A8A7A;font-size:12px'>Gem. hoogte: "+z.gem+" mm</span>";
                         var zm = L.marker([z.lat,z.lon],{icon:icon, pane:'zonesPane'}).bindPopup(popupTekst);
                         zoneMarkers.push(zm);
                         if(map.getZoom() >= ZONE_ZOOM) zm.addTo(map);
                     });
                 }
+                veldRoute.push({naam:naam, gem:gem, lat:cx, lon:cy, poly:poly});
             }, vertraging);
 
             vertraging += 150;
         });
+
+        // Depot-icoon (kantoor/startpunt maaier)
+        var depotIcon = L.divIcon({className:'', iconSize:[32,32], iconAnchor:[16,16],
+            html:"<div style='font-size:26px;line-height:32px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))'>🏠</div>"
+        });
+        L.marker([53.2924234, 6.5967591], {icon:depotIcon, zIndexOffset:1500})
+         .addTo(map).bindTooltip("Depot Van der Werf", {direction:'top'});
+
+        // Maaier aan/uit knop
+        var depot = [53.2924234, 6.5967591];
+        var maaier = null, maaierSessie = 0, maaierActief = false;
+
+        var btnCtrl = L.control({position:'topleft'});
+        btnCtrl.onAdd = function() {
+            var div = L.DomUtil.create('div');
+            div.innerHTML = '<button id="maaier-btn" style="background:#2D6A4F;color:#fff;border:none;border-radius:8px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);font-family:sans-serif">🚜 Maaier aan</button>';
+            L.DomEvent.disableClickPropagation(div);
+            div.querySelector('#maaier-btn').onclick = function() { maaierActief ? stopMaaier() : startMaaier(); };
+            return div;
+        };
+        btnCtrl.addTo(map);
+
+        function startMaaier() {
+            if(maaierActief || !veldRoute.length) return;
+            maaierActief = true;
+            document.getElementById('maaier-btn').textContent = '⏹ Stop maaier';
+            var sessie = ++maaierSessie;
+            veldRoute.sort(function(a,b){ return b.gem-a.gem; });
+            var maaierIcon = L.divIcon({className:'', iconSize:[28,28], iconAnchor:[14,14],
+                html:"<div style='font-size:22px;line-height:28px;text-align:center;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))'>🚜</div>"
+            });
+            maaier = L.marker(depot, {icon:maaierIcon, zIndexOffset:3000}).addTo(map);
+            var route = [depot].concat(veldRoute.map(function(v){ return [v.lat,v.lon]; })).concat([depot]);
+            var polys  = [null].concat(veldRoute.map(function(v){ return v.poly; })).concat([null]);
+
+            function animeer(van, naar, duur, cb) {
+                var n=Math.max(1,Math.round(duur/40)), s=0;
+                var t=setInterval(function(){
+                    if(maaierSessie!==sessie){ clearInterval(t); return; }
+                    s++; maaier.setLatLng([van[0]+(naar[0]-van[0])*s/n, van[1]+(naar[1]-van[1])*s/n]);
+                    if(s>=n){ clearInterval(t); cb(); }
+                }, 40);
+            }
+
+            function stap(i) {
+                if(maaierSessie!==sessie) return;
+                if(i>=route.length-1){ setTimeout(function(){ if(maaierSessie===sessie) stap(0); },1000); return; }
+                var dx=route[i+1][0]-route[i][0], dy=route[i+1][1]-route[i][1];
+                animeer(route[i], route[i+1], Math.min(3000,Math.max(800,Math.sqrt(dx*dx+dy*dy)*150000)), function(){
+                    if(maaierSessie!==sessie) return;
+                    var p=polys[i+1];
+                    if(p){ p.setStyle({fillOpacity:0.8}); setTimeout(function(){ if(maaierSessie===sessie){ p.setStyle({fillOpacity:0.45}); setTimeout(function(){ stap(i+1); },400); } },1800); }
+                    else { setTimeout(function(){ if(maaierSessie===sessie) stap(i+1); },600); }
+                });
+            }
+            stap(0);
+        }
+
+        function stopMaaier() {
+            maaierActief = false;
+            var sessie = ++maaierSessie;
+            document.getElementById('maaier-btn').textContent = '🚜 Maaier aan';
+            if(!maaier) return;
+            var van = maaier.getLatLng(), n=25, s=0;
+            var t = setInterval(function(){
+                s++; maaier.setLatLng([van.lat+(depot[0]-van.lat)*s/n, van.lng+(depot[1]-van.lng)*s/n]);
+                if(s>=n){ clearInterval(t); if(maaier){ map.removeLayer(maaier); maaier=null; } }
+            }, 30);
+        }
+
+        // Prioriteitsoverzicht — gevuld nadat alle velden geladen zijn
+        var prioCtrl = L.control({position:'bottomleft'});
+        prioCtrl.onAdd = function() {
+            var div = L.DomUtil.create('div','prioriteit-panel');
+            div.id = 'prio-panel';
+            div.innerHTML = '<b>Maaivolgorde</b><div style="color:#aaa;font-size:12px">Laden...</div>';
+            return div;
+        };
+        prioCtrl.addTo(map);
+
+        setTimeout(function() {
+            veldRoute.sort(function(a,b){ return b.gem-a.gem; });
+            var html = '<b>Maaivolgorde</b>';
+            veldRoute.forEach(function(v,i){
+                html += '<div class="prioriteit-rij">' +
+                    '<span class="prio-nr">'+(i+1)+'.</span>' +
+                    '<span class="prio-dot" style="background:'+kleurVoor(v.gem)+'"></span>' +
+                    '<span class="prio-naam">'+v.naam+'</span>' +
+                    '<span class="prio-mm">'+v.gem+' mm</span>' +
+                '</div>';
+            });
+            document.getElementById('prio-panel').innerHTML = html;
+        }, vertraging + 400);
 
         // Legenda rechtsonder
         var legenda = L.control({ position: "bottomright" });
