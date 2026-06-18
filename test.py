@@ -1,112 +1,51 @@
 import urllib.request
 import json
-import urllib.error
 
-# Dit bestandje is om te gebruiken na het runnen van de app om tests toe te voegen, voel vrij om aan te passen of toe te voegen.
+BASE_URL = "http://127.0.0.1:5000/api/measurement"
 
-# --------------------------------------------------------
+def stuur(location, height_mm, lat, lon):
+    data = json.dumps({"location": location, "height_mm": height_mm, "latitude": lat, "longitude": lon}).encode()
+    req = urllib.request.Request(BASE_URL, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req) as r: print(f"  ✓ {location} {height_mm}mm")
+    except Exception as e: print(f"  ✗ {e}")
 
-meettechniek = json.dumps({
-    "height_mm": 65.2,
-    "location": "Schut Geometrische Meettechniek B.V. - Groningen",
-    "latitude": 53.2,
-    "longitude": 6.6
-}).encode("utf-8")
+def veld(naam, clat, clon, dlat, dlon, hfn, nx=6, ny=5):
+    """Genereert nx×ny meetpunten in een veldrooster met kleine variatie."""
+    print(naam)
+    for i in range(ny):
+        for j in range(nx):
+            lat = clat + (i - (ny-1)/2) * dlat / (ny-1)
+            lon = clon + (j - (nx-1)/2) * dlon / (nx-1)
+            lat += ((i*13+j*7) % 9 - 4) * 0.00004
+            lon += ((i*7+j*11) % 9 - 4) * 0.00004
+            dy = (lat - clat) / (dlat / 2)
+            dx = (lon - clon) / (dlon / 2)
+            h = round(max(25, min(350, hfn(dy, dx))), 1)
+            stuur(naam, h, lat, lon)
 
-meettechniek_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=meettechniek,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
+# Sportveld Bedum — hoog gras noordkant, lager zuidkant
+veld("Sportveld Bedum", 53.3020, 6.5878, 0.0022, 0.0034,
+     lambda dy, dx: 55 + dy*22 + dx*6 + dy*dx*5)
 
-# --------------------------------------------------------
+# Weiland Usquert — hoog gras geheel, hoger in het noordoosten
+veld("Weiland Usquert", 53.4042, 6.6112, 0.0020, 0.0030,
+     lambda dy, dx: 82 + dy*10 + dx*12 + abs(dx)*5)
 
-hanze = json.dumps({
-    "height_mm": 50.0,
-    "location": "Hanze-Hogeschool - Groningen",
-    "latitude": 53.240635,
-    "longitude": 6.533013
-}).encode("utf-8")
+# Recreatiegebied Zuidhorn — lager gras, lichte variatie
+veld("Recreatiegebied Zuidhorn", 53.2469, 6.3925, 0.0022, 0.0036,
+     lambda dy, dx: 46 + dy*9 + dx*7 + abs(dy*dx)*6)
 
-hanze_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=hanze,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
+# Polderveld Ten Boer — gradient west→oost
+veld("Polderveld Ten Boer", 53.2682, 6.7037, 0.0020, 0.0032,
+     lambda dy, dx: 68 + dx*18 + dy*5 + dx*dx*8)
 
-# --------------------------------------------------------
+# Bedumer bos — hoog gras, hogere kern in het midden
+veld("Bedumer bos - Groningen", 53.2930, 6.6002, 0.0022, 0.0036,
+     lambda dy, dx: 115 + (1 - dy**2 - dx**2) * 25 + dy*8)
 
-spijkerzoon = json.dumps({
-    "height_mm": 33.4,
-    "location": "Spijkerzoom - Roden",
-    "latitude": 53.135343,
-    "longitude": 6.437479
-}).encode("utf-8")
+# De Onlanden - Peize — zeer hoog, gradient NW→ZO
+veld("De Onlanden - Peize", 53.1672, 6.5243, 0.0024, 0.0038,
+     lambda dy, dx: 238 + dy*18 - dx*12 + abs(dy - dx)*7)
 
-spijkerzoon_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=spijkerzoon,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-
-# --------------------------------------------------------
-
-bedum = json.dumps({
-    "height_mm": 80.9,
-    "location": "Bedumer bos - Groningen",
-    "latitude": 53.292851,
-    "longitude": 6.600285
-}).encode("utf-8")
-
-bedum_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=bedum,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-
-# --------------------------------------------------------
-
-boermapark = json.dumps({
-    "height_mm": 70.9,
-    "location": "Boermapark - Haren",
-    "latitude": 53.292851,
-    "longitude": 6.600285
-}).encode("utf-8")
-
-boermapark_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=boermapark,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-
-# --------------------------------------------------------
-
-onlanden = json.dumps({
-    "height_mm": 240.9,
-    "location": "De Onlanden - Peize",
-    "latitude": 53.166870,
-    "longitude": 6.524265
-}).encode("utf-8")
-
-onlanden_req = urllib.request.Request(
-    "http://127.0.0.1:5000/api/measurement",
-    data=onlanden,
-    headers={"Content-Type": "application/json"},
-    method="POST"
-)
-
-# --------------------------------------------------------
-
-try:
-    for verzoek in [meettechniek_req, hanze_req, spijkerzoon_req, bedum_req, boermapark_req, onlanden_req]:
-        with urllib.request.urlopen(verzoek) as response:
-            print(response.read().decode())
-except urllib.error.HTTPError as e:
-    print("Fout:", e.code, e.read().decode())
-except Exception as e:
-    print("Fout:", e)
+print("\nKlaar!")

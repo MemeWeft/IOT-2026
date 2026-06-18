@@ -4,15 +4,14 @@ from .database import get_db
 
 class MeasurementRepository:
 
-    # Nieuwe functie die uit de db voor elke locatie de recente meting geeft mits er coordinaten zijn, waarna hiij lijst teruggeeft (voor de kaartpagina):
+    # Haalt ALLE metingen op met GPS-coördinaten (voor kaartpagina met polygonen en maairoute)
     @staticmethod
     def get_map_data() -> list[dict]:
         rows = get_db().execute(
             "SELECT location, latitude, longitude, height_mm "
             "FROM measurements "
-            "WHERE latitude IS NOT NULL "
-            "GROUP BY location "
-            "ORDER BY measured_at DESC"
+            "WHERE latitude IS NOT NULL AND longitude IS NOT NULL "
+            "ORDER BY location, height_mm DESC"
         ).fetchall()
         return [dict(r) for r in rows]
 
