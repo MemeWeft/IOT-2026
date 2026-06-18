@@ -2,12 +2,14 @@
 
 Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een samenwerking tussen Groenvoorziening A.J. van der Werf en Hanze Hogeschool Groningen (2026).
 
+
 ## Branches
 
 | Branch | Beschrijving |
 |--------|-------------|
 | `main` | Overige bestanden voor documentatie, code zelf is voornamelijk gewerkt in branches. |
 | `gps-feature` | Meest recente versie (branch) met GPS-functionaliteit |
+
 
 ## Uitgebreide documentatie (gelinkt aan Confluence)
 
@@ -20,6 +22,7 @@ Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een same
 | `Spike Stories.md` | Spike stories en onderzoekstaken die tijd hebben gekost |
 | `Stand-Up Log.md` | Stand-up schema en logboek, zowel voor periode 1 als periode 2 |
 | `Verdeling Taken.md` | Taakverdeling binnen het team |
+
 
 ## Scrumboard & Issues
 
