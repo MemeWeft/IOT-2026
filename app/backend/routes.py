@@ -5,13 +5,18 @@ from .auth import login_required, admin_required
 
 main_bp = Blueprint("main", __name__)
 
+
+def _client():
+    """Geeft de client_name van de ingelogde gebruiker terug (None = admin/intern)."""
+    return session.get("client_name")
+
+
 # ── Pages ──────────────────────────────────────────────────────────────────
 
-# Nieuwe route voor de pagina van de kaart:
 @main_bp.get("/kaart")
 @login_required
 def kaart_weergave():
-    kaart      = MeasurementRepository.get_map_data()
+    kaart = MeasurementRepository.get_map_data(client_name=_client())
     return render_template("kaart.html", kaart=kaart)
 
 @main_bp.get("/")
@@ -22,10 +27,11 @@ def index():
 @main_bp.get("/dashboard")
 @login_required
 def dashboard():
-    stats      = MeasurementRepository.get_stats()
-    summary    = MeasurementRepository.get_location_summary()
-    compliance = MeasurementRepository.get_compliance_pct()
-    loc_count  = MeasurementRepository.get_unique_location_count()
+    cn = _client()
+    stats      = MeasurementRepository.get_stats(client_name=cn)
+    summary    = MeasurementRepository.get_location_summary(client_name=cn)
+    compliance = MeasurementRepository.get_compliance_pct(client_name=cn)
+    loc_count  = MeasurementRepository.get_unique_location_count(client_name=cn)
     return render_template("dashboard.html", stats=stats, summary=summary,
                            compliance_pct=compliance, loc_count=loc_count)
 
@@ -39,8 +45,9 @@ def reports():
 @main_bp.get("/measurement")
 @login_required
 def measurement():
-    stats = MeasurementRepository.get_stats()
-    rows  = MeasurementRepository.get_all(50)
+    cn    = _client()
+    stats = MeasurementRepository.get_stats(client_name=cn)
+    rows  = MeasurementRepository.get_all(50, client_name=cn)
     return render_template("measurement.html", stats=stats, rows=rows)
 
 @main_bp.get("/users")
@@ -57,12 +64,13 @@ def api_create_user():
     username = body.get("username", "").strip()
     password = body.get("password", "")
     is_admin = bool(body.get("is_admin", False))
+    client_name = (body.get("client_name") or "").strip() or None
     if not username or not password:
         abort(400, "username and password required")
-    user_id = UserRepository.create(username, password, is_admin)
+    user_id = UserRepository.create(username, password, is_admin, client_name)
     if user_id is None:
         abort(409, "Username already exists")
-    return jsonify({"id": user_id, "username": username}), 201
+    return jsonify({"id": user_id, "username": username, "client_name": client_name}), 201
 
 @main_bp.post("/api/users/<int:user_id>/password")
 @admin_required
@@ -85,40 +93,37 @@ def api_delete_user(user_id):
     return jsonify({"deleted": user_id})
 
 # Measurement API (open for Pico):
-
-# Deze functie haalt JSON data op die de Pico instuurt en haalt daar hoogte, latitude en longitude uit.
-# Als er geen hoogte is, geeft hij foutmelding terug.
-# Hij slaat de meting op in de database via model.py en stuurt dan bevestiging naar Pico.
 @main_bp.post("/api/measurement")
 def add_measurement():
     body = request.get_json(force=True, silent=True) or {}
     height = body.get("height_mm")
     lat = body.get("latitude")
     long = body.get("longitude")
+    client_name = body.get("client_name")
     if height is None:
         abort(400, "height_mm required")
-    row_id = MeasurementRepository.insert(float(height), body.get("location", "Onbekend"), lat, long)
+    row_id = MeasurementRepository.insert(float(height), body.get("location", "Onbekend"), lat, long, client_name)
     return jsonify({"id": row_id, "height_mm": height, "latitude": lat, "longitude": long}), 201
 
 @main_bp.get("/api/measurements")
 @login_required
 def api_measurements():
-    return jsonify(MeasurementRepository.get_all(50))
+    return jsonify(MeasurementRepository.get_all(50, client_name=_client()))
 
 @main_bp.get("/api/chart-data")
 @login_required
 def api_chart_data():
-    return jsonify(MeasurementRepository.get_chart_data())
+    return jsonify(MeasurementRepository.get_chart_data(client_name=_client()))
 
 @main_bp.get("/api/quality-summary")
 @login_required
 def api_quality_summary():
-    return jsonify(MeasurementRepository.get_quality_summary())
+    return jsonify(MeasurementRepository.get_quality_summary(client_name=_client()))
 
 @main_bp.get("/api/location-summary")
 @login_required
 def api_location_summary():
-    return jsonify(MeasurementRepository.get_location_summary())
+    return jsonify(MeasurementRepository.get_location_summary(client_name=_client()))
 
 @main_bp.post("/api/reports/generate")
 @login_required
