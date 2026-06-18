@@ -7,7 +7,11 @@ class UserRepository:
     @staticmethod
     def get_all() -> list[dict]:
         rows = get_users_db().execute(
+<<<<<<< HEAD
+            "SELECT id, username, is_admin, client_name, created_at FROM users ORDER BY is_admin DESC, username ASC"
+=======
             "SELECT id, username, is_admin, created_at FROM users ORDER BY is_admin DESC, username ASC"
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -33,12 +37,21 @@ class UserRepository:
         return None
 
     @staticmethod
+<<<<<<< HEAD
+    def create(username: str, password: str, is_admin: bool = False, client_name: str = None) -> int | None:
+        db = get_users_db()
+        try:
+            cur = db.execute(
+                "INSERT INTO users (username, password_hash, is_admin, client_name) VALUES (?, ?, ?, ?)",
+                (username.strip(), generate_password_hash(password), int(is_admin), client_name or None)
+=======
     def create(username: str, password: str, is_admin: bool = False) -> int | None:
         db = get_users_db()
         try:
             cur = db.execute(
                 "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
                 (username.strip(), generate_password_hash(password), int(is_admin))
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
             )
             db.commit()
             return cur.lastrowid

@@ -43,9 +43,16 @@ def login_post():
     user = UserRepository.verify(username, password)
     if not user:
         return render_template("login.html", error="Onjuiste gebruikersnaam of wachtwoord.")
+<<<<<<< HEAD
+    session["user_id"]     = user["id"]
+    session["username"]    = user["username"]
+    session["is_admin"]    = bool(user["is_admin"])
+    session["client_name"] = user.get("client_name")
+=======
     session["user_id"]  = user["id"]
     session["username"] = user["username"]
     session["is_admin"] = bool(user["is_admin"])
+>>>>>>> d7c69c298701bbb996e43421c0ddf7ff3df61f79
     return redirect(url_for("main.index"))
 
 
