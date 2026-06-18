@@ -36,9 +36,6 @@ veld("Recreatiegebied Zuidhorn", 53.2469, 6.3925, 0.0022, 0.0036,
      lambda dy, dx: 46 + dy*9 + dx*7 + abs(dy*dx)*6,
      client_name="Gemeente Groningen")
 
-veld("Bedumer bos - Groningen", 53.2930, 6.6002, 0.0022, 0.0036,
-     lambda dy, dx: 115 + (1 - dy**2 - dx**2) * 25 + dy*8,
-     client_name="Gemeente Groningen")
 
 # --- Interne velden (geen klant) ---
 veld("Weiland Usquert", 53.4042, 6.6112, 0.0020, 0.0030,
