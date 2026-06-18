@@ -5,16 +5,23 @@ Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een same
 ## Branches informnatie
 
 `main` | Overige (belangrijke) bestanden voor documentatie, code zelf is voornamelijk vergerkt in branches. Misschien niet het meest logisch, maar dit werkte voor ons prima en we vonden het niet nodig dit te veranderen.
+
 `gps-feature` | Meest recente versie (branch) met GPS-functionaliteit
 
 ## Uitgebreide documentatie (gelinkt aan Confluence)
 
 `Bestanden Delen.md` | Bestandsdeling in de Cloud op een plek
+
 `Overzicht.md` | Projectoverzicht
+
 `Requirementanalyse.md` | Functionele en niet-functionele requirements, dit was aan het begin
+
 `Retrospectives.md` | Retrospectives per periode
+
 `Spike Stories.md` | Spike stories en onderzoekstaken die tijd hebben gekost
+
 `Stand-Up Log.md` | Stand-up schema en logboek, zowel voor periode 1 als periode 2
+
 `Verdeling Taken.md` | Taakverdeling binnen het team
 
 ## Scrumboard & Issues
