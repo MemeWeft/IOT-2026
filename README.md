@@ -33,4 +33,4 @@ Documentatie en bronbestanden voor het IoT Grasmaaier Sensor project in een same
 
 ## Namen
 
-- ""Namen"" — Drie van ons (Mats, Koen & Damian) hebben eigen naam in onze gebruikersnaam zitten, Wouter is de overige dus (MemeWeft).
+- **Namen** — Drie van ons (Mats, Koen & Damian) hebben eigen *Naam* in onze gebruikersnaam zitten, Wouter is de overige dus (MemeWeft).
