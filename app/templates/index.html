@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Home — Groen Beheer{% endblock %}
+{% block eyebrow %}Overzicht{% endblock %}
+{% block page_title %}Welkom terug{% endblock %}
+
+{% block extra_style %}
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .kpi-value { font-family: var(--font-head); font-size: 36px; font-weight: 700; line-height: 1; margin: 4px 0; }
+  .kpi-value small { font-size: 16px; font-weight: 500; margin-left: 2px; }
+  .kpi-value.accent { color: var(--green-dark); }
+  .kpi-value.warn { color: var(--red); }
+  .kpi-sub { font-size: 12.5px; color: var(--muted); }
+  .nav-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .nav-card { display: flex; align-items: center; gap: 18px; padding: 24px 28px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform 0.18s, box-shadow 0.18s; }
+  .nav-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .nav-card.green { background: var(--green-soft); border-color: #B6DCCA; }
+  .nav-card.sand  { background: var(--sand); border-color: #E5D8BE; }
+  .nav-card.blue  { background: #EEF3FF; border-color: #C5D3F5; }
+  .nav-card-icon { font-size: 30px; width: 40px; text-align: center; flex-shrink: 0; }
+  .nav-card-body { flex: 1; }
+  .nav-card-body h3 { font-family: var(--font-head); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .nav-card-body p { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .nav-card-arrow { font-size: 22px; color: var(--muted); }
+{% endblock %}
+
+{% block content %}
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <span class="kpi-label">Nalevingspercentage</span>
+    <span class="kpi-value accent">{{ compliance_pct }}<small>%</small></span>
+    <span class="kpi-sub">Niveau A + B metingen</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Totaal metingen</span>
+    <span class="kpi-value">{{ stats.total or 0 }}</span>
+    <span class="kpi-sub">Opgeslagen in database</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Locaties gemonitord</span>
+    <span class="kpi-value">{{ loc_count }}</span>
+    <span class="kpi-sub">Unieke locaties</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Max. grashoogte norm</span>
+    <span class="kpi-value">80<small>mm</small></span>
+    <span class="kpi-sub">KOR beeldkwaliteit B</span>
+  </div>
+</div>
+
+<div class="section-title">Navigeer naar</div>
+<div class="nav-cards">
+  <a href="{{ url_for('main.dashboard') }}" class="nav-card green">
+    <div class="nav-card-icon">◈</div>
+    <div class="nav-card-body">
+      <h3>Dashboard</h3>
+      <p>Grashoogte trends, kwaliteitsniveaus en locatiedata per maaier.</p>
+    </div>
+    <span class="nav-card-arrow">→</span>
+  </a>
+  <a href="{{ url_for('main.reports') }}" class="nav-card sand">
+    <div class="nav-card-icon">≡</div>
+    <div class="nav-card-body">
+      <h3>Rapporten</h3>
+      <p>Weekrapportages voor opdrachtgevers. Automatisch verwijderd na 30 dagen.</p>
+    </div>
+    <span class="nav-card-arrow">→</span>
+  </a>
+  <a href="{{ url_for('main.measurement') }}" class="nav-card blue">
+    <div class="nav-card-icon">📡</div>
+    <div class="nav-card-body">
+      <h3>Live Metingen</h3>
+      <p>Realtime data van de Pico sensor. Ververst elke 5 seconden.</p>
+    </div>
+    <span class="nav-card-arrow">→</span>
+  </a>
+</div>
+
+<div class="section-title">Locatiestatus</div>
+{% if summary %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Locatie</th>
+        <th>Gem. hoogte</th>
+        <th>Max. hoogte</th>
+        <th>Kwaliteit</th>
+        <th>Metingen</th>
+        <th>Laatste meting</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in summary %}
+      {% set color = '#4CAF82' if row.avg_height <= 50 else ('#E8A838' if row.avg_height <= 80 else '#E05A5A') %}
+      <tr>
+        <td><strong>{{ row.location }}</strong></td>
+        <td>
+          <div class="height-cell">
+            <span class="height-val">{{ row.avg_height }} mm</span>
+            <div class="height-bar-wrap">
+              <div class="height-bar" style="width: {{ [row.avg_height / 1.2, 100] | min }}%; background: {{ color }}"></div>
+            </div>
+          </div>
+        </td>
+        <td class="muted">{{ row.max_height }} mm</td>
+        <td><span class="quality-badge q{{ row.quality }}">{{ row.quality }}</span></td>
+        <td class="muted">{{ row.total }}</td>
+        <td class="muted">{{ row.last_measured[:10] if row.last_measured else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-card" style="padding:48px;text-align:center;color:var(--muted)">
+  <p style="font-size:14px">Nog geen locatiedata. Verbind de Pico sensor om metingen te ontvangen.</p>
+</div>
+{% endif %}
+
+{% endblock %}
