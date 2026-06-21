@@ -128,7 +128,7 @@ users.html — admin-paneel: gebruikers aanmaken, wachtwoord wijzigen, verwijder
 test.py — Test/seed-script
 Geen geautomatiseerde test, maar een script dat via urllib neppe meetdata naar POST /api/measurement stuurt om de database te vullen:
 
-stuur(...) — verstuurt één meting.
-veld(...) — genereert een rooster van nx×ny meetpunten binnen een rechthoekig gebied met een hoogtefunctie hfn(dy, dx), plus ruis.
-Onderaan: 3 velden gekoppeld aan "Gemeente Groningen" en 3 interne (klant-loze) velden.
+stuur(...) — verstuurt één meting. 
+veld(...) — genereert een rooster van nx×ny meetpunten binnen een rechthoekig gebied met een hoogtefunctie hfn(dy, dx), plus ruis. 
+Onderaan: 3 velden gekoppeld aan "Gemeente Groningen" en 3 interne (klant-loze) velden. 
 
